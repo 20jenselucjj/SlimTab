@@ -119,6 +119,12 @@ function toUiSettings(settings: Settings): SlimTabSettings {
 }
 
 function toRuntimeSettings(ui: SlimTabSettings, current: Settings): Settings {
+  // Preserve previous non-off values when enabling features
+  const prevFontLevel = current.pageTweaks.fontOptimization !== 'off' ? current.pageTweaks.fontOptimization : 'medium';
+  const prevPreloadMode = current.pageTweaks.preloading !== 'off' ? current.pageTweaks.preloading : 'same-site';
+  const prevAdsLevel = current.blocking.adsLevel !== 'off' ? current.blocking.adsLevel : 'high';
+  const prevScriptsLevel = current.blocking.scriptsLevel !== 'off' ? current.blocking.scriptsLevel : 'low';
+
   return {
     ...current,
     suspension: {
@@ -132,14 +138,18 @@ function toRuntimeSettings(ui: SlimTabSettings, current: Settings): Settings {
     },
     blocking: {
       ...current.blocking,
-      adsLevel: ui.adBlocking ? ui.adBlockingLevel : 'off',
-      scriptsLevel: ui.scriptControl ? ui.scriptControlLevel : 'off',
+      adsLevel: ui.adBlocking ? (ui.adBlockingLevel === 'off' ? prevAdsLevel : ui.adBlockingLevel) : 'off',
+      scriptsLevel: ui.scriptControl ? (ui.scriptControlLevel === 'off' ? prevScriptsLevel : ui.scriptControlLevel) : 'off',
     },
     pageTweaks: {
       ...current.pageTweaks,
-      fontOptimization: ui.fontOptimization ? strategyToFontLevel(ui.fontStrategy) : 'off',
+      fontOptimization: ui.fontOptimization 
+        ? (ui.fontStrategy === 'off' ? prevFontLevel : strategyToFontLevel(ui.fontStrategy)) 
+        : 'off',
       visibleContentPriority: ui.prioritizeVisibleContent ? current.pageTweaks.visibleContentPriority === 'off' ? 'medium' : current.pageTweaks.visibleContentPriority : 'off',
-      preloading: ui.linkPreloading ? strategyToPreload(ui.preloadStrategy) : 'off',
+      preloading: ui.linkPreloading 
+        ? (ui.preloadStrategy === 'off' ? prevPreloadMode : strategyToPreload(ui.preloadStrategy)) 
+        : 'off',
       stopAutoplay: ui.stopAutoplay ? ui.autoplayStrategy : 'off',
     },
     safeMode: {
